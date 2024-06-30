@@ -7,11 +7,6 @@ class PaymentType(Enum):
   DEPOSIT = "deposit"
   WITHDRAW = "withdrawal" 
 
-data_file = sys.argv[1]
-
-with open(data_file, 'r') as f:
-  data = f.read()
-
 def extract_transactions(soup: BeautifulSoup, type: PaymentType) -> list:
   tab = soup.find(f'bc-payment-history-{type.value}', class_='w_100 is-active ng-star-inserted')
   box_ammount_contents = tab.find_all('div', class_='myAccount_boxTitleContent')
@@ -40,6 +35,10 @@ def calculate_sum(lst):
   return ret
 
 if __name__ == '__main__':
+  data_file = sys.argv[1]
+  with open(data_file, 'r') as f:
+    data = f.read()
+
   soup = BeautifulSoup(data, 'html.parser')
 
   deposits = extract_transactions(soup, PaymentType.DEPOSIT)
