@@ -1,13 +1,18 @@
 document.getElementById('scrapeButton').addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  chrome.scripting.executeScript({
+  // Execute the script on the current active tab
+  const [profit] = await chrome.scripting.executeScript({
     target: { tabId: tab.id },
     function: scrapePage,
   });
+
+  const profit_display = document.getElementById('profitDisplay');
+  profit_display.textContent = `Profit: ${profit.result.toFixed(2)}`
 });
 
-function scrapePage() {
+
+async function scrapePage() {
   const PaymentType = {
     DEPOSIT: "deposit",
     WITHDRAWAL: "withdrawal" 
@@ -15,7 +20,7 @@ function scrapePage() {
 
   async function clickTab(label) {
     const tab = Array.from(document.querySelectorAll('[data-qa="tab-btn"]'))
-                     .find(tab => tab.querySelector('.tab_label').textContent.trim() === label);
+                    .find(tab => tab.querySelector('.tab_label').textContent.trim() === label);
     if (tab) {
         tab.click();
     } else {
@@ -38,6 +43,7 @@ function scrapePage() {
           }
       });
   }
+
 
   function extract_transactions(type) {
     const history = document.querySelector('bc-payment-history-' + type);
@@ -63,17 +69,17 @@ function scrapePage() {
 
   }
 
-  (async () => {
-    await clickTab("Dep\u00F3sitos");
-    await clickLoadMoreButton();
-    let deposits = extract_transactions(PaymentType.DEPOSIT);
 
-    await clickTab('Levantamentos');
-    await clickLoadMoreButton();
-    let withdrawals = extract_transactions(PaymentType.WITHDRAWAL);
+  await clickTab("Dep\u00F3sitos");
+  await clickLoadMoreButton();
+  let deposits = extract_transactions(PaymentType.DEPOSIT);
 
-    console.log(deposits);
-    console.log(withdrawals);
-  })();
+  await clickTab('Levantamentos');
+  await clickLoadMoreButton();
+  let withdrawals = extract_transactions(PaymentType.WITHDRAWAL);
+
+  let profit = withdrawals.reduce((partialSum, a) => partialSum + a, 0) 
+            - deposits.reduce((partialSum, a) => partialSum + a, 0);
+
+  return profit;
 }
-
